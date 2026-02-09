@@ -1,252 +1,178 @@
 @extends('layouts.app')
 
-@section('title', 'Wiratama Teknik - Sewa Genset & AC Standing')
-
 @section('content')
-    <!-- Hero Section -->
-    <section id="home" class="hero-section">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-6">
-                    <h1 class="display-4 fw-bold mb-4">Sewa Genset & AC Standing Terpercaya di Tangerang</h1>
-                    <p class="lead mb-4">Melayani penyewaan untuk berbagai kebutuhan acara seperti syuting, konser, hajatan, dan kegiatan lainnya dengan kualitas terbaik dan harga kompetitif.</p>
-                    <div class="d-flex flex-wrap gap-3">
-                        <a href="#products" class="btn btn-primary btn-lg px-4 py-3">
-                            <i class="fas fa-tools me-2"></i> Lihat Produk
-                        </a>
-                        <a href="{{ route('pricing') }}" class="btn btn-outline-light btn-lg px-4 py-3">
-                            <i class="fas fa-tag me-2"></i> Lihat Harga
-                        </a>
-                    </div>
-                </div>
-                <div class="col-lg-6">
-                    <img src="https://images.unsplash.com/photo-1621905252507-b35492cc74b4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
-                         alt="Genset" class="img-fluid rounded shadow">
-                </div>
+
+<style>
+    /* Hero Section */
+    .hero-section {
+        background: linear-gradient(rgba(15, 47, 87, 0.85), rgba(15, 47, 87, 0.85)), url('https://images.unsplash.com/photo-1565610222536-ef125c59da2c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');
+        background-size: cover;
+        background-position: center;
+        padding: 100px 0;
+        color: white;
+    }
+    .hero-img {
+        max-width: 100%;
+        border-radius: 5px;
+        /* Meniru gambar genset kuning di header */
+        content: url('https://png.pngtree.com/png-clipart/20230916/original/pngtree-industrial-diesel-generator-isolated-on-white-background-backup-power-photo-png-image_12249764.png'); 
+    }
+
+    /* Yellow About Section */
+    .about-section {
+        background-color: #ffc107; /* Kuning terang */
+        padding: 80px 0;
+    }
+    .about-img {
+        width: 100%;
+        height: 350px;
+        object-fit: cover;
+        border-radius: 8px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+
+    /* Category Cards */
+    .cat-card {
+        border: 1px solid #eee;
+        transition: 0.3s;
+        height: 100%;
+        background: white;
+    }
+    .cat-card img {
+        height: 150px;
+        object-fit: contain;
+        padding: 20px;
+    }
+    .cat-btn {
+        background-color: #0f2f57;
+        color: white;
+        width: 100%;
+        border-radius: 0 0 5px 5px;
+        padding: 10px;
+        font-size: 0.9rem;
+    }
+
+    /* Product Cards */
+    .product-card {
+        background: #f8f9fa; /* Abu-abu muda seperti di gambar */
+        border: none;
+        border-radius: 8px;
+        overflow: hidden;
+        height: 100%;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    .product-img-wrapper {
+        background: #e9ecef; /* Background abu-abu untuk gambar produk */
+        height: 200px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .product-img-wrapper img {
+        max-height: 160px;
+        max-width: 80%;
+    }
+    .product-body { padding: 20px; }
+    .product-title { font-weight: 700; font-size: 1rem; color: #333; margin-bottom: 10px; }
+    .product-desc { font-size: 0.8rem; color: #666; line-height: 1.5; margin-bottom: 20px; }
+    .btn-detail {
+        background-color: #ffc107;
+        color: #000;
+        font-weight: 600;
+        font-size: 0.8rem;
+        padding: 8px 20px;
+        border: none;
+        border-radius: 4px;
+    }
+    .btn-detail:hover { background-color: #e0a800; }
+</style>
+
+<!-- 1. Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <h1 class="display-5 fw-bold mb-3">Sewa Genset & AC Standing Profesional untuk Kebutuhan Anda</h1>
+                <p class="mb-4 text-light opacity-75">Solusi terpercaya untuk penyewaan genset dan AC standing dengan kualitas terbaik. Layanan 24 jam untuk acara, proyek, maupun kebutuhan darurat.</p>
+                <a href="#produk" class="btn btn-warning px-4 py-2 fw-bold">Lihat Produk</a>
+            </div>
+            <div class="col-lg-6 d-none d-lg-block text-end">
+                <img class="hero-img" alt="Genset Kuning">
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- Features Section -->
-    <section class="py-5 bg-light">
-        <div class="container">
-            <div class="row text-center mb-5">
-                <div class="col">
-                    <h2 class="section-title d-inline-block">Mengapa Memilih Kami?</h2>
-                </div>
+<!-- 2. About Section (Kuning) -->
+<section class="about-section">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-5 mb-4 mb-lg-0">
+                <!-- Gambar Genset Hijau/Biru di kiri -->
+                <img src="https://sc04.alicdn.com/kf/H8a846059530449419159040960534262W.jpg" class="about-img" alt="Genset Facility">
             </div>
-            <div class="row">
-                <div class="col-md-3 mb-4">
-                    <div class="text-center p-4">
-                        <div class="feature-icon">
-                            <i class="fas fa-shield-alt"></i>
-                        </div>
-                        <h5>Terpercaya</h5>
-                        <p>Sudah berpengalaman melayani berbagai acara dengan reputasi terpercaya</p>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-4">
-                    <div class="text-center p-4">
-                        <div class="feature-icon">
-                            <i class="fas fa-truck"></i>
-                        </div>
-                        <h5>Pengiriman Cepat</h5>
-                        <p>Proses pengiriman cepat dan tepat waktu sesuai jadwal acara Anda</p>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-4">
-                    <div class="text-center p-4">
-                        <div class="feature-icon">
-                            <i class="fas fa-cogs"></i>
-                        </div>
-                        <h5>Perawatan Rutin</h5>
-                        <p>Semua unit mendapatkan perawatan rutin untuk performa optimal</p>
-                    </div>
-                </div>
-                <div class="col-md-3 mb-4">
-                    <div class="text-center p-4">
-                        <div class="feature-icon">
-                            <i class="fas fa-headset"></i>
-                        </div>
-                        <h5>Support 24/7</h5>
-                        <p>Dukungan teknis siap membantu selama masa penyewaan</p>
-                    </div>
-                </div>
+            <div class="col-lg-7 ps-lg-5">
+                <h4 class="fw-bold mb-3">Wiratama Teknik</h4>
+                <p class="mb-3">Wiratama Teknik adalah usaha penyewaan genset dan AC standing yang berlokasi di Tangerang. Kami telah melayani berbagai kebutuhan acara seperti syuting film, konser musik, hajatan, pernikahan, dan acara besar lainnya.</p>
+                <p>Dengan pengalaman bertahun-tahun, kami memahami pentingnya keandalan peralatan untuk kesuksesan acara Anda. Kami menyediakan unit yang terawat baik dengan kapasitas yang beragam untuk memenuhi kebutuhan Anda.</p>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- About Section -->
-    <section id="about" class="py-5">
-        <div class="container">
-            <div class="row align-items-center">
-                <div class="col-lg-6 mb-5 mb-lg-0">
-                    <img src="https://images.unsplash.com/photo-1581094794329-c8112a89af12?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
-                         alt="Tentang Wiratama Teknik" class="img-fluid rounded shadow">
-                </div>
-                <div class="col-lg-6">
-                    <h2 class="section-title">Tentang Wiratama Teknik</h2>
-                    <p class="mb-4">Wiratama Teknik adalah usaha penyewaan genset dan AC standing yang berlokasi di Tangerang. Kami telah melayani berbagai kebutuhan acara seperti syuting film, konser musik, hajatan, pernikahan, dan acara besar lainnya.</p>
-                    <p class="mb-4">Dengan pengalaman bertahun-tahun, kami memahami pentingnya keandalan peralatan untuk kesuksesan acara Anda. Kami menyediakan unit yang terawat baik dengan kapasitas yang beragam untuk memenuhi kebutuhan Anda.</p>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Unit terawat dan performa optimal</li>
-                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Tersedia berbagai kapasitas daya</li>
-                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Pelayanan cepat dan responsif</li>
-                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Harga transparan dan kompetitif</li>
-                    </ul>
-                </div>
+<!-- 3. Kategori Produk (Grid 5 Kolom) -->
+<!-- 3. Kategori Produk (Grid 5 Kolom) -->
+<section class="py-5">
+    <div class="container">
+        <div class="row justify-content-center g-4">
+            @foreach($categories as $cat)
+            <div class="col-6 col-md-2"> 
+                <!-- TAMBAHKAN TAG A DI SINI -->
+                <a href="{{ route('products') }}" style="text-decoration: none; color: inherit;">
+                    <div class="cat-card d-flex flex-column align-items-center">
+                        <img src="{{ $cat['image'] }}" alt="{{ $cat['name'] }}">
+                        <div class="cat-btn text-center">{{ $cat['name'] }}</div>
+                    </div>
+                </a>
+                <!-- END TAG A -->
             </div>
+            @endforeach
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- Products Section -->
-    <section id="products" class="py-5 bg-light">
-        <div class="container">
-            <div class="row mb-5">
-                <div class="col">
-                    <h2 class="section-title">Produk Kami</h2>
-                    <p class="lead">Pilih genset atau AC standing sesuai kebutuhan acara Anda</p>
-                </div>
-            </div>
-            
-            <!-- Genset Products -->
-            <div class="row mb-5">
-                <div class="col">
-                    <h4 class="mb-4"><i class="fas fa-bolt text-warning me-2"></i> Genset</h4>
-                </div>
-            </div>
-            <div class="row">
-                @foreach($gensetProducts as $product)
-                <div class="col-md-4 mb-4">
-                    <div class="card product-card h-100">
-                        <img src="{{ $product['image'] }}" class="card-img-top product-img" alt="{{ $product['name'] }}">
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="card-title">{{ $product['name'] }}</h5>
-                            <p class="card-text flex-grow-1">{{ $product['description'] }}</p>
-                            <div class="mt-auto">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <span class="h5 text-primary mb-0">Rp {{ number_format($product['price_per_day'], 0, ',', '.') }}/hari</span>
-                                    <span class="badge bg-success">Tersedia</span>
-                                </div>
-                                <a href="{{ route('product.detail', ['type' => 'genset', 'id' => $product['id']]) }}" class="btn btn-primary w-100">
-                                    <i class="fas fa-info-circle me-2"></i> Detail & Sewa
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                @endforeach
-            </div>
-            
-            <!-- AC Products -->
-            <div class="row mt-5">
-                <div class="col">
-                    <h4 class="mb-4"><i class="fas fa-snowflake text-info me-2"></i> AC Standing</h4>
-                </div>
-            </div>
-            <div class="row">
-                @foreach($acProducts as $product)
-                <div class="col-md-4 mb-4">
-                    <div class="card product-card h-100">
-                        <img src="{{ $product['image'] }}" class="card-img-top product-img" alt="{{ $product['name'] }}">
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="card-title">{{ $product['name'] }}</h5>
-                            <p class="card-text flex-grow-1">{{ $product['description'] }}</p>
-                            <div class="mt-auto">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <span class="h5 text-primary mb-0">Rp {{ number_format($product['price_per_day'], 0, ',', '.') }}/hari</span>
-                                    <span class="badge bg-success">Tersedia</span>
-                                </div>
-                                <a href="{{ route('product.detail', ['type' => 'ac', 'id' => $product['id']]) }}" class="btn btn-primary w-100">
-                                    <i class="fas fa-info-circle me-2"></i> Detail & Sewa
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                @endforeach
-            </div>
+<!-- 4. Produk Unggulan -->
+<section class="py-5 bg-white" id="produk">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Produk Unggulan Kami</h2>
+            <p class="text-muted">Produk paling populer dan terlaris pilihan pelanggan kami.</p>
         </div>
-    </section>
 
-    <!-- Contact Section -->
-    <section id="contact" class="py-5">
-        <div class="container">
-            <div class="row mb-5">
-                <div class="col">
-                    <h2 class="section-title">Hubungi Kami</h2>
-                    <p class="lead">Siap melayani kebutuhan penyewaan genset dan AC standing untuk acara Anda</p>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-6 mb-4">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title mb-4">Informasi Kontak</h5>
-                            <div class="mb-3">
-                                <h6><i class="fas fa-map-marker-alt text-primary me-2"></i> Alamat</h6>
-                                <p class="ms-4">Tangerang, Banten - Indonesia</p>
-                            </div>
-                            <div class="mb-3">
-                                <h6><i class="fas fa-phone text-primary me-2"></i> Telepon/WhatsApp</h6>
-                                <p class="ms-4">+62 812-3456-7890</p>
-                            </div>
-                            <div class="mb-3">
-                                <h6><i class="fas fa-envelope text-primary me-2"></i> Email</h6>
-                                <p class="ms-4">info@wiratamateknik.com</p>
-                            </div>
-                            <div class="mb-3">
-                                <h6><i class="fas fa-clock text-primary me-2"></i> Jam Operasional</h6>
-                                <p class="ms-4">Senin - Jumat: 08:00 - 17:00 WIB<br>Sabtu: 08:00 - 15:00 WIB</p>
-                            </div>
-                        </div>
+        <!-- INI KODE BARU YANG BENAR. HANYA ADA SATU GRID. -->
+        <div class="row g-4 justify-content-center">
+            @forelse($featuredProducts as $item)
+            <div class="col-lg-3 col-md-4 col-sm-6 d-flex">
+                <div class="product-card w-100">
+                    <div class="product-img-wrapper">
+                        <!-- Menggunakan object property -> bukan array key [] -->
+                        <img src="{{ $item->image }}" alt="{{ $item->name }}">
                     </div>
-                </div>
-                <div class="col-md-6 mb-4">
-                    <div class="card h-100">
-                        <div class="card-body">
-                            <h5 class="card-title mb-4">Kirim Pesan</h5>
-                            <form action="#" method="POST">
-                                @csrf
-                                <div class="mb-3">
-                                    <label for="name" class="form-label">Nama Lengkap</label>
-                                    <input type="text" class="form-control" id="name" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="email" class="form-label">Email</label>
-                                    <input type="email" class="form-control" id="email" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="phone" class="form-label">Nomor Telepon</label>
-                                    <input type="text" class="form-control" id="phone" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="message" class="form-label">Pesan</label>
-                                    <textarea class="form-control" id="message" rows="4" required></textarea>
-                                </div>
-                                <button type="submit" class="btn btn-primary">Kirim Pesan</button>
-                            </form>
-                        </div>
+                    <div class="product-body">
+                        <div class="product-title">{{ $item->name }}</div>
+                        <div class="product-desc">{{ $item->description }}</div>
+                        <a href="{{ route('product.detail', $item->id) }}" class="btn-detail mt-auto">Lihat Detail</a>
                     </div>
                 </div>
             </div>
+            @empty
+            <div class="col-12">
+                <p class="text-center text-muted">Belum ada produk unggulan yang bisa ditampilkan.</p>
+            </div>
+            @endforelse
         </div>
-    </section>
-@endsection
-
-@push('styles')
-    <style>
-        .hero-section h1 {
-            font-size: 3rem;
-        }
         
-        @media (max-width: 768px) {
-            .hero-section h1 {
-                font-size: 2.2rem;
-            }
-            body {
-                padding-top: 66px;
-            }
-        }
-    </style>
-@endpush
+    </div>
+</section>
+
+@endsection
