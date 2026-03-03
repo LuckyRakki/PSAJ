@@ -38,10 +38,19 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg sticky-top">
         <div class="container">
-            <!-- 1. LOGO KLIK KE HOME -->
-            <a class="navbar-brand" href="{{ route('home') }}">
-                <i class="fas fa-bolt me-2"></i>Wiratama <span>Teknik</span>
-            </a>
+            <a class="navbar-brand d-flex align-items-center text-nowrap" href="{{ route('home') }}">
+                <a class="navbar-brand d-flex align-items-center" href="{{ route('home') }}">
+                    @if(isset($app_settings['site_logo']) && !empty($app_settings['site_logo']))
+                        <img src="{{ asset($app_settings['site_logo']) }}" alt="Logo" height="40" class="me-2 rounded flex-shrink-0">
+                    @else
+                        <i class="fas fa-bolt me-2 text-warning flex-shrink-0"></i>
+                    @endif
+                    
+                    <!-- HAPUS text-truncate dan max-width -->
+                    <span class="fw-bold text-white shadow-sm">
+                        {{ $app_settings['site_name'] ?? 'Wiratama Teknik' }}
+                    </span>
+                </a>
             <button class="navbar-toggler navbar-dark" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -69,7 +78,7 @@
                                 @if(Auth::user()->role == 'admin')
                                     <li><a class="dropdown-item" href="#">Dashboard Admin</a></li>
                                 @endif
-                                <li><a class="dropdown-item" href="#">Keranjang Saya</a></li>
+                                <li><a class="dropdown-item" href="{{ route('profile') }}">Profil Saya</a></li>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
                                     <form action="{{ route('logout') }}" method="POST">

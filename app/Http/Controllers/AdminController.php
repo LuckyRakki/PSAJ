@@ -7,9 +7,12 @@ use App\Models\Product;
 use App\Models\Category;
 use App\Models\User;
 use App\Models\Message;
+use App\Models\Invoice;
+use App\Models\Setting;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class AdminController extends Controller
 {
@@ -19,8 +22,9 @@ class AdminController extends Controller
         $totalProducts = Product::count();
         $totalCategories = Category::count();
         $totalUsers = User::where('role', 'user')->count();
+        $recentInvoices = Invoice::with('user')->latest()->take(5)->get();
         
-        return view('admin.dashboard', compact('totalProducts', 'totalCategories', 'totalUsers'));
+        return view('admin.dashboard', compact('totalProducts', 'totalCategories', 'totalUsers', 'recentInvoices'));
     }
 
     // 2. List Produk
@@ -145,33 +149,24 @@ class AdminController extends Controller
 
     public function chat($user_id = null)
     {
-        // 1. Ambil daftar User yang pernah chat dengan Admin (baik kirim atau terima)
-        // Kita gunakan query ini agar user yang baru saja chat muncul paling atas
         $users = User::where('role', 'user')
-            ->whereHas('sentMessages', function($q) {
-                $q->where('receiver_id', Auth::id());
-            })
-            ->orWhereHas('receivedMessages', function($q) {
-                $q->where('sender_id', Auth::id());
-            })
+            ->whereHas('sentMessages') // Ambil user yang pernah kirim pesan
+            ->orWhereHas('receivedMessages')
             ->withCount(['sentMessages as unread' => function($q) {
                 $q->where('receiver_id', Auth::id())->where('is_read', false);
             }])
             ->get();
 
-        // 2. Jika ada user yang dipilih (diklik dari list)
         $messages = [];
         $currentUser = null;
 
         if ($user_id) {
             $currentUser = User::findOrFail($user_id);
             
-            // Tandai pesan dari user ini sebagai "sudah dibaca"
             Message::where('sender_id', $user_id)
                    ->where('receiver_id', Auth::id())
                    ->update(['is_read' => true]);
 
-            // Ambil percakapan
             $messages = Message::where(function($q) use ($user_id) {
                 $q->where('sender_id', Auth::id())->where('receiver_id', $user_id);
             })->orWhere(function($q) use ($user_id) {
@@ -185,14 +180,104 @@ class AdminController extends Controller
     public function chatReply(Request $request, $user_id)
     {
         $request->validate(['message' => 'required|string']);
-
         Message::create([
             'sender_id' => Auth::id(),
             'receiver_id' => $user_id,
             'message' => $request->message,
             'is_read' => false 
         ]);
-
         return back();
     }
+
+    // Method Baru: Buat Invoice
+    public function createInvoice(Request $request, $user_id)
+    {
+        $request->validate([
+            'title' => 'required|string',
+            'amount' => 'required|numeric'
+        ]);
+
+        // 1. Buat Invoice di Database
+        $invoice = Invoice::create([
+            'invoice_code' => 'INV-' . strtoupper(Str::random(6)),
+            'user_id' => $user_id,
+            'title' => $request->title,
+            'amount' => $request->amount,
+            'due_date' => now()->addDay(), // Timer 24 Jam
+            'status' => 'pending'
+        ]);
+
+        // 2. Kirim Pesan Otomatis ke User
+        Message::create([
+            'sender_id' => Auth::id(),
+            'receiver_id' => $user_id,
+            'message' => "Halo, Tagihan baru telah dibuat: **{$request->title}** senilai **Rp " . number_format($request->amount) . "**. Silakan cek detailnya di atas chat ini.",
+            'is_read' => false
+        ]);
+
+        return back()->with('success', 'Tagihan berhasil dibuat dan dikirim ke user.');
+    }
+
+    public function approveInvoice($id)
+    {
+        $invoice = Invoice::findOrFail($id);
+        $invoice->update(['status' => 'paid']);
+
+        // Kirim notifikasi ke user
+        Message::create([
+            'sender_id' => Auth::id(),
+            'receiver_id' => $invoice->user_id,
+            'message' => "Pembayaran untuk tagihan #{$invoice->invoice_code} telah DITERIMA. Terima kasih! Barang akan segera diproses.",
+            'is_read' => false
+        ]);
+
+        return back()->with('success', 'Pembayaran berhasil dikonfirmasi.');
+    }
+
+    // Halaman Settings
+    public function settings()
+    {
+        $settings = Setting::all()->pluck('value', 'key');
+        return view('admin.settings.index', compact('settings'));
+    }
+
+    // Proses Update Settings
+    public function settingsUpdate(Request $request)
+    {
+        // Update Nama Web
+        Setting::where('key', 'site_name')->update(['value' => $request->site_name]);
+
+        // Update Logo (Jika ada upload)
+        if ($request->hasFile('site_logo')) {
+            $file = $request->file('site_logo');
+            $filename = 'logo_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/settings'), $filename);
+            Setting::updateOrCreate(['key' => 'site_logo'], ['value' => 'uploads/settings/' . $filename]);
+        }
+
+        if ($request->hasFile('qris_image')) {
+            $file = $request->file('qris_image');
+            $filename = 'qris_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/settings'), $filename);
+            \App\Models\Setting::updateOrCreate(['key' => 'qris_image'], ['value' => 'uploads/settings/' . $filename]);
+        }
+
+        // Update Rekening (Array ke JSON)
+        $banks = [];
+        if ($request->has('bank_name')) {
+            foreach ($request->bank_name as $index => $name) {
+                if (!empty($name)) {
+                    $banks[] = [
+                        'bank' => $name,
+                        'number' => $request->bank_number[$index],
+                        'name' => $request->bank_account_name[$index]
+                    ];
+                }
+            }
+        }
+        Setting::where('key', 'bank_accounts')->update(['value' => json_encode($banks)]);
+
+        return back()->with('success', 'Pengaturan berhasil disimpan!');
+    }
+    
 }
