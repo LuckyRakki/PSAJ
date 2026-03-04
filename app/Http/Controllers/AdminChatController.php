@@ -47,7 +47,7 @@ class AdminChatController extends Controller
             $q->where('is_read', false)->where('receiver_id', Auth::id());
         }])->get();
 
-        return view('admin.chat.show', compact('users', 'currentUser', 'messages'));
+        return view('admin.chat.index', compact('users', 'currentUser', 'messages'));
     }
 
     // Balas Pesan

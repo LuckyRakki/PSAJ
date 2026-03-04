@@ -174,7 +174,9 @@ class AdminController extends Controller
             })->orderBy('created_at', 'asc')->get();
         }
 
-        return view('admin.chat.index', compact('users', 'messages', 'currentUser'));
+        $products = \App\Models\Product::all();
+
+        return view('admin.chat.index', compact('users', 'messages', 'currentUser', 'products'));
     }
 
     public function chatReply(Request $request, $user_id)
@@ -278,6 +280,45 @@ class AdminController extends Controller
         Setting::where('key', 'bank_accounts')->update(['value' => json_encode($banks)]);
 
         return back()->with('success', 'Pengaturan berhasil disimpan!');
+    }
+
+    public function customers()
+    {
+        // Ambil semua user yang role-nya 'user'
+        $customers = User::where('role', 'user')->orderBy('created_at', 'desc')->get();
+        return view('admin.customers', compact('customers'));
+    }
+
+    public function customerDestroy($id)
+    {
+        $customer = User::findOrFail($id);
+        
+        // Pastikan tidak menghapus admin
+        if($customer->role == 'admin') {
+            return back()->with('error', 'Tidak bisa menghapus Admin!');
+        }
+
+        $customer->delete();
+        return back()->with('success', 'Customer berhasil dihapus.');
+    }
+
+    public function reports(Request $request)
+    {
+        // Ambil data invoice yang LUNAS (paid) dan hubungkan dengan data User (penyewa)
+        // Kita juga tambahkan fitur filter berdasarkan bulan
+        $query = Invoice::where('status', 'paid');
+
+        if ($request->has('month') && $request->month != '') {
+            $query->whereMonth('created_at', $request->month);
+            // Opsional: whereYear('created_at', date('Y')) jika hanya tahun ini
+        }
+
+        $invoices = $query->orderBy('created_at', 'desc')->get();
+        
+        // Hitung total pendapatan dari invoice yang sudah lunas
+        $totalPendapatan = $invoices->sum('amount');
+
+        return view('admin.reports', compact('invoices', 'totalPendapatan'));
     }
     
 }

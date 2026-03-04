@@ -104,11 +104,20 @@
                     </div>
                 @endif
 
-                <div class="mt-4">
-                    <button class="btn-add">
-                        <i class="fas fa-shopping-cart me-2"></i> Tambahkan Produk
-                    </button>
-                    <!-- Tombol Kembali ke List Produk -->
+                <div class="mt-4 d-flex justify-content-center align-items-center">
+                    @auth
+                        <form action="{{ route('chat.send_product', $product->id) }}" method="POST">
+                            @csrf
+                            <button type="submit" class="btn-add">
+                                <i class="fas fa-comment-dots me-2"></i> Tanya Harga & Ketersediaan
+                            </button>
+                        </form>
+                    @else
+                        <a href="{{ route('login') }}" class="btn-add text-decoration-none" style="display: inline-block;">
+                            <i class="fas fa-sign-in-alt me-2"></i> Login untuk Menyewa
+                        </a>
+                    @endauth
+
                     <a href="{{ route('products') }}" class="btn btn-outline-secondary ms-2" style="padding: 12px 30px;">
                         Kembali ke List
                     </a>

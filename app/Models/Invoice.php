@@ -15,14 +15,13 @@ class Invoice extends Model
         'title',
         'amount',
         'status', // pending, confirmed, paid, cancelled
-        
-        // Data Tambahan dari Form User
         'nama_penyewa',
         'no_hp',
         'alamat_pengiriman',
         'tanggal_mulai',
         'durasi_sewa',
-        'catatan'
+        'catatan',
+        'snap_token'
     ];
 
     public function user() {

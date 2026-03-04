@@ -10,6 +10,7 @@ use App\Http\Controllers\ProfileController;
 Route::get('/', [ProductController::class, 'home'])->name('home');
 Route::get('/produk', [ProductController::class, 'index'])->name('products');
 Route::get('/produk/{id}', [ProductController::class, 'show'])->name('product.detail');
+Route::post('/midtrans/callback', [App\Http\Controllers\ChatController::class, 'midtransCallback']);
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -34,12 +35,15 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/invoice/{id}/confirm', [ChatController::class, 'processConfirm'])->name('invoice.process');
     Route::get('/invoice/{id}/payment', [ChatController::class, 'showPayment'])->name('invoice.payment');
     Route::post('/invoice/{id}/payment', [ChatController::class, 'processPayment'])->name('invoice.payment.process');
+    Route::post('/chat/product/{id}', [ChatController::class, 'sendProductMessage'])->name('chat.send_product');
 });
 
 // --- ADMIN ROUTES ---
 Route::middleware(['auth', 'checkRole:admin'])->prefix('admin')->group(function () {
     
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+    Route::get('/customers', [AdminController::class, 'customers'])->name('admin.customers');
+    Route::delete('/customers/{id}', [AdminController::class, 'customerDestroy'])->name('admin.customers.destroy');
 
     // Produk
     Route::get('/products', [AdminController::class, 'products'])->name('admin.products');
@@ -56,6 +60,8 @@ Route::middleware(['auth', 'checkRole:admin'])->prefix('admin')->group(function 
     // Route Baru: Buat Invoice
     Route::post('/chat/invoice/{user_id}', [AdminController::class, 'createInvoice'])->name('admin.chat.invoice');
     Route::post('/invoice/{id}/approve', [AdminController::class, 'approveInvoice'])->name('admin.invoice.approve');
+
+    Route::get('/reports', [AdminController::class, 'reports'])->name('admin.reports');
 
     Route::get('/settings', [AdminController::class, 'settings'])->name('admin.settings');
     Route::post('/settings', [AdminController::class, 'settingsUpdate'])->name('admin.settings.update');

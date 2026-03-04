@@ -40,11 +40,21 @@
                         <div class="fw-bold text-primary">Rp {{ number_format($inv->amount) }}</div>
                         
                         @if($inv->status == 'pending')
-                            <a href="{{ route('invoice.confirm', $inv->id) }}" class="btn btn-sm btn-primary">Lanjut Bayar</a>
-                        @elseif($inv->status == 'confirmed')
-                            <a href="{{ route('invoice.payment', $inv->id) }}" class="btn btn-sm btn-warning">Upload Bukti</a>
-                        @elseif($inv->status == 'waiting_verification')
-                             <small class="text-info"><i class="fas fa-clock"></i> Menunggu Admin</small>
+                            <!-- Tahap 1: Isi Alamat -->
+                            <a href="{{ route('invoice.confirm', $inv->id) }}" class="btn btn-sm btn-warning text-dark">
+                                <i class="fas fa-edit"></i> Lengkapi Data
+                            </a>
+
+                        @elseif($inv->status == 'confirmed') 
+                            <!-- Tahap 2: Bayar (Midtrans) - BUKAN UPLOAD BUKTI -->
+                            <a href="{{ route('invoice.payment', $inv->id) }}" class="btn btn-sm btn-success">
+                                <i class="fas fa-credit-card"></i> Bayar Sekarang
+                            </a>
+
+                        @elseif($inv->status == 'paid')
+                            <button class="btn btn-sm btn-secondary" disabled>
+                                <i class="fas fa-check-circle"></i> Selesai
+                            </button>
                         @endif
                     </div>
                 </div>

@@ -8,26 +8,28 @@ use App\Models\Invoice; // Tambahkan Model Invoice
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Midtrans\Config;
+use Midtrans\Snap;
 
 class ChatController extends Controller
 {
     public function index()
     {
-        $admin = User::where('role', 'admin')->first();
-        if (!$admin) return redirect()->route('home')->with('error', 'Admin tidak tersedia.');
+        $messages = Message::where('sender_id', Auth::id())
+                           ->orWhere('receiver_id', Auth::id())
+                           ->orderBy('created_at', 'asc')
+                           ->get();
 
-        // Ambil Pesan
-        $messages = Message::where(function($q) use ($admin) {
-            $q->where('sender_id', Auth::id())->where('receiver_id', $admin->id);
-        })->orWhere(function($q) use ($admin) {
-            $q->where('sender_id', $admin->id)->where('receiver_id', Auth::id());
-        })->orderBy('created_at', 'asc')->get();
+        // Tampilkan hanya tagihan Lunas ATAU yang umurnya kurang dari 24 jam
+        $invoices = Invoice::where('user_id', Auth::id())
+                           ->where(function($query) {
+                               $query->where('status', 'paid')
+                                     ->orWhere('created_at', '>=', now()->subHours(24));
+                           })
+                           ->orderBy('created_at', 'desc')
+                           ->get();
 
-        $invoices = \App\Models\Invoice::where('user_id', \Illuminate\Support\Facades\Auth::id())
-                ->orderBy('created_at', 'desc')
-                ->get();
-
-        return view('chat.index', compact('messages', 'admin', 'invoices'));
+        return view('chat.index', compact('messages', 'invoices'));
     }
 
     public function store(Request $request)
@@ -45,6 +47,30 @@ class ChatController extends Controller
         }
         return back();
     }
+
+    public function sendProductMessage($id)
+    {
+        $product = \App\Models\Product::with('category')->findOrFail($id);
+        $admin = User::where('role', 'admin')->first();
+
+        if (!$admin) {
+            return redirect()->back()->with('error', 'Admin tidak tersedia saat ini.');
+        }
+
+        // KITA UBAH FORMATNYA MENJADI KODE UNIK DENGAN PEMISAH GARIS LURUS (|)
+        // Format: [PRODUCT_CARD]|ID|Nama|Kategori|Gambar
+        $templateMessage = "[PRODUCT_CARD]|{$product->id}|{$product->name}|{$product->category->name}|{$product->image}";
+
+        Message::create([
+            'sender_id' => Auth::id(),
+            'receiver_id' => $admin->id,
+            'message' => $templateMessage,
+            'is_read' => false
+        ]);
+
+        return redirect()->route('chat')->with('success', 'Permintaan sewa terkirim! Silakan tunggu balasan dari Admin.');
+    }
+
     public function showConfirmForm($id)
     {
         $invoice = Invoice::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
@@ -68,25 +94,73 @@ class ChatController extends Controller
             'durasi_sewa' => 'required|integer|min:1',
         ]);
 
+        $durasi = $request->durasi_sewa;
+        $totalHargaFinal = $invoice->amount * $durasi;
+
         $invoice->update([
             'nama_penyewa' => $request->nama_penyewa,
             'no_hp' => $request->no_hp,
             'alamat_pengiriman' => $request->alamat_pengiriman,
             'tanggal_mulai' => $request->tanggal_mulai,
-            'durasi_sewa' => $request->durasi_sewa,
+            'durasi_sewa' => $durasi,
             'catatan' => $request->catatan,
-            'status' => 'confirmed' // Status berubah jadi confirmed
+            
+            'amount' => $totalHargaFinal, // <-- PENTING: Update harga akhirnya di sini
+            'status' => 'confirmed'
         ]);
 
         return redirect()->route('invoice.payment', $id);
     }
     public function showPayment($id)
     {
-        $invoice = Invoice::where('id', $id)->where('user_id', Auth::id())->firstOrFail();
+        $invoice = \App\Models\Invoice::where('id', $id)->where('user_id', \Illuminate\Support\Facades\Auth::id())->firstOrFail();
 
-        // Jika status masih pending (belum isi alamat), lempar ke form confirm dulu
-        if ($invoice->status == 'pending') {
-            return redirect()->route('invoice.confirm', $id);
+        // 1. Konfigurasi Midtrans (Ambil dari Config)
+        Config::$serverKey = config('services.midtrans.server_key');
+        Config::$isProduction = config('services.midtrans.is_production');
+        Config::$isSanitized = true;
+        Config::$is3ds = true;
+
+        // 2. Cek Token
+        if (empty($invoice->snap_token)) {
+            
+            // Buat Order ID unik
+            $orderId = $invoice->invoice_code . '-' . time();
+
+            // FIX: Pastikan Harga adalah INTEGER BULAT
+            $grossAmount = (int) round($invoice->amount);
+
+            $params = [
+                'transaction_details' => [
+                    'order_id' => $orderId,
+                    'gross_amount' => $grossAmount, 
+                ],
+                'customer_details' => [
+                    'first_name' => $invoice->nama_penyewa,
+                    'email' => \Illuminate\Support\Facades\Auth::user()->email,
+                    'phone' => $invoice->no_hp ?? '08123456789',
+                ],
+                'item_details' => [
+                    [
+                        'id' => $invoice->id,
+                        'price' => $grossAmount, // FIX: HARUS INTEGER
+                        'quantity' => 1,
+                        'name' => substr($invoice->title, 0, 49) // Limit nama barang
+                    ]
+                ]
+            ];
+
+            try {
+                $snapToken = Snap::getSnapToken($params);
+                
+                // Simpan ke database
+                $invoice->snap_token = $snapToken;
+                $invoice->save();
+                
+            } catch (\Exception $e) {
+                // DEBUGGING: Matikan redirect loop, tampilkan error aslinya
+                dd('Midtrans Error: ' . $e->getMessage()); 
+            }
         }
 
         return view('chat.payment', compact('invoice'));
@@ -125,5 +199,43 @@ class ChatController extends Controller
         }
 
         return redirect()->route('chat')->with('success', 'Bukti pembayaran berhasil dikirim!');
+    }
+
+    public function midtransCallback(Request $request)
+    {
+        // Kunci rahasia server kamu (Pastikan ada di file .env)
+        $serverKey = config('services.midtrans.server_key');
+        
+        // Midtrans mengirimkan data, kita buat kuncinya untuk dicocokkan
+        $hashed = hash("sha512", $request->order_id . $request->status_code . $request->gross_amount . $serverKey);
+        
+        // Jika kuncinya cocok (berarti valid dari Midtrans, bukan hacker)
+        if ($hashed == $request->signature_key) {
+            
+            // Cari tagihan berdasarkan order_id (biasanya menggunakan invoice_code)
+            $invoice = \App\Models\Invoice::where('invoice_code', $request->order_id)->first();
+            
+            if ($invoice) {
+                // Jika pembayaran Sukses (Settlement / Capture)
+                if ($request->transaction_status == 'capture' || $request->transaction_status == 'settlement') {
+                    $invoice->update(['status' => 'paid']);
+                    
+                    // (Opsional) Kirim notifikasi chat ke user otomatis dari sistem
+                    \App\Models\Message::create([
+                        'sender_id' => \App\Models\User::where('role', 'admin')->first()->id,
+                        'receiver_id' => $invoice->user_id,
+                        'message' => "Pembayaran untuk tagihan **{$invoice->invoice_code}** telah kami terima. Status pesanan Anda sekarang LUNAS dan akan segera kami proses.",
+                        'is_read' => false
+                    ]);
+                } 
+                // Jika pembayaran Kedaluwarsa / Batal (Expire / Cancel)
+                elseif ($request->transaction_status == 'expire' || $request->transaction_status == 'cancel') {
+                    $invoice->update(['status' => 'pending']); // Atau bisa ubah jadi 'failed' / 'expired'
+                }
+            }
+        }
+        
+        // Wajib balas 200 OK ke Midtrans agar mereka tidak mengirim notifikasi berulang-ulang
+        return response()->json(['message' => 'Callback received']);
     }
 }

@@ -71,6 +71,13 @@
             <a href="{{ route('admin.chat') }}" class="list-group-item list-group-item-action {{ request()->routeIs('admin.chat*') ? 'active' : '' }}">
                 <i class="fas fa-comments me-3" style="width:20px"></i> Live Chat
             </a>
+            <a href="{{ route('admin.reports') }}" class="list-group-item list-group-item-action {{ request()->routeIs('admin.reports') ? 'active' : '' }}">
+                <i class="fas fa-chart-line me-3" style="width:20px"></i> Laporan & Histori
+            </a>
+            <a href="{{ route('admin.customers') }}" class="list-group-item list-group-item-action {{ request()->routeIs('admin.customers') ? 'active' : '' }}">
+                <i class="fas fa-users me-3" style="width:20px"></i> Kelola Customer
+            </a>
+            
             <a href="{{ route('admin.settings') }}" class="list-group-item list-group-item-action {{ request()->routeIs('admin.settings*') ? 'active' : '' }}">
                 <i class="fas fa-cog me-3" style="width:20px"></i> Pengaturan
             </a>
