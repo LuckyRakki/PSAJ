@@ -51,7 +51,8 @@
     .prod-card-full:hover { transform: translateY(-5px); }
     
     .prod-img-box {
-        background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+        /* Ini background abu-abunya! Aku ubah jadi solid agar persis seperti gambar referensi */
+        background-color: #e9ecef; 
         height: 220px;
         display: flex;
         align-items: center;
@@ -62,7 +63,7 @@
         max-height: 180px;
         max-width: 100%;
         object-fit: contain;
-        filter: drop-shadow(0 10px 10px rgba(0,0,0,0.2)); 
+        filter: drop-shadow(0 10px 10px rgba(0,0,0,0.15)); 
     }
     .prod-body {
         padding: 20px;
@@ -115,58 +116,49 @@
 <div class="container py-5 mt-3">
     <div class="row">
         
-        <!-- Sidebar Filter -->
         <div class="col-md-3 d-none d-md-block filter-sidebar">
-            <div class="filter-title">Filter Produk</div>
+            <div class="filter-title">Kategori Produk</div>
             
+            @php
+                // Mengambil semua kategori unik dari database
+                $categories = \App\Models\Category::all();
+            @endphp
+
+            @foreach($categories as $cat)
             <div class="form-check mb-2">
-                <input class="form-check-input filter-checkbox" type="checkbox" value="genset" id="f1" checked>
-                <label class="form-check-label" for="f1">Genset Silent</label>
+                <input class="form-check-input filter-checkbox" type="checkbox" value="{{ $cat->id }}" id="cat-{{ $cat->id }}" checked>
+                <label class="form-check-label fw-medium" for="cat-{{ $cat->id }}">{{ $cat->name }}</label>
             </div>
-            <div class="form-check mb-2">
-                <input class="form-check-input filter-checkbox" type="checkbox" value="ac" id="f2" checked>
-                <label class="form-check-label" for="f2">AC Standing</label>
-            </div>
-            <div class="form-check mb-2">
-                <input class="form-check-input filter-checkbox" type="checkbox" value="fan" id="f3" checked>
-                <label class="form-check-label" for="f3">Misty Fan</label>
-            </div>
-            <div class="form-check mb-2">
-                <input class="form-check-input filter-checkbox" type="checkbox" value="tenda" id="f4" checked>
-                <label class="form-check-label" for="f4">Tenda</label>
-            </div>
+            @endforeach
         </div>
 
-        <!-- Product Grid -->
         <div class="col-md-9">
             <div class="row g-4" id="product-grid">
                 @foreach($allProducts as $product)
-                <!-- Tambahkan data-category untuk filtering JS -->
-                <div class="col-md-4 col-sm-6 product-item" data-category="{{ $product->category->slug }}">
+                <div class="col-md-4 col-sm-6 product-item" data-category="{{ $product->category->id ?? 0 }}">
                     <div class="prod-card-full">
                         <div class="prod-img-box">
-                            <img src="{{ $product->image }}" alt="{{ $product['name'] }}">
+                            <img src="{{ Str::startsWith($product->image, 'http') ? $product->image : asset($product->image) }}" alt="{{ $product->name }}">
                         </div>
                         <div class="prod-body">
-                            <h5 class="prod-name">{{ $product['name'] }}</h5>
-                            <p class="prod-desc">{{ $product['desc'] }}</p>
-                            <a href="{{ route('product.detail', $product['id']) }}" class="btn-lihat">Lihat Detail</a>
+                            <h5 class="prod-name">{{ $product->name }}</h5>
+                            <p class="prod-desc">{{ $product->desc ?? $product->description }}</p>
+                            <a href="{{ route('product.detail', $product->id) }}" class="btn-lihat">Lihat Detail</a>
                         </div>
                     </div>
                 </div>
                 @endforeach
             </div>
             
-            <!-- Pesan jika kosong -->
-            <div id="no-products" class="alert alert-warning mt-3 text-center" style="display: none;">
-                Tidak ada produk yang sesuai dengan filter.
+            <div id="no-products" class="alert alert-warning mt-4 text-center border-0 shadow-sm" style="display: none;">
+                <i class="fas fa-box-open fa-2x mb-2 text-muted"></i><br>
+                Tidak ada produk yang sesuai dengan kategori yang dipilih.
             </div>
         </div>
 
     </div>
 </div>
 
-<!-- Script Javascript untuk Filter -->
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const checkboxes = document.querySelectorAll('.filter-checkbox');

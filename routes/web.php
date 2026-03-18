@@ -10,7 +10,7 @@ use App\Http\Controllers\ProfileController;
 Route::get('/', [ProductController::class, 'home'])->name('home');
 Route::get('/produk', [ProductController::class, 'index'])->name('products');
 Route::get('/produk/{id}', [ProductController::class, 'show'])->name('product.detail');
-Route::post('/midtrans/callback', [App\Http\Controllers\ChatController::class, 'midtransCallback']);
+Route::post('/midtrans/callback', [App\Http\Controllers\ChatController::class, 'midtransCallback'])->name('midtrans.callback');
 
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
@@ -26,6 +26,9 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/chat', [ChatController::class, 'index'])->name('chat');
     Route::post('/chat', [ChatController::class, 'store'])->name('chat.send');
+
+    Route::get('/payment/success/{id}', [App\Http\Controllers\ChatController::class, 'paymentSuccess'])->name('payment.success');
+    Route::get('/payment/failed/{id}', [App\Http\Controllers\ChatController::class, 'paymentFailed'])->name('payment.failed');
     
     // Placeholder Bayar
     Route::get('/invoice/{id}/pay', function($id) {
@@ -52,6 +55,13 @@ Route::middleware(['auth', 'checkRole:admin'])->prefix('admin')->group(function 
     Route::get('/products/{id}/edit', [AdminController::class, 'productEdit'])->name('admin.products.edit');
     Route::put('/products/{id}', [AdminController::class, 'productUpdate'])->name('admin.products.update');
     Route::delete('/products/{id}', [AdminController::class, 'productDestroy'])->name('admin.products.destroy');
+
+    Route::get('/categories', [AdminController::class, 'categories'])->name('admin.categories');
+    Route::get('/categories/create', [AdminController::class, 'categoryCreate'])->name('admin.categories.create');
+    Route::post('/categories', [AdminController::class, 'categoryStore'])->name('admin.categories.store');
+    Route::get('/categories/{id}/edit', [AdminController::class, 'categoryEdit'])->name('admin.categories.edit');
+    Route::put('/categories/{id}', [AdminController::class, 'categoryUpdate'])->name('admin.categories.update');
+    Route::delete('/categories/{id}', [AdminController::class, 'categoryDestroy'])->name('admin.categories.destroy');
 
     // Chat & Invoice
     Route::get('/chat/{user_id?}', [AdminController::class, 'chat'])->name('admin.chat');

@@ -50,23 +50,24 @@
 
 <script type="text/javascript">
     const payButton = document.getElementById('pay-button');
-    
-    // Pastikan tombol ada sebelum pasang event listener
     if(payButton) {
         payButton.addEventListener('click', function () {
             window.snap.pay('{{ $invoice->snap_token }}', {
                 onSuccess: function(result){
-                    alert("Pembayaran Berhasil!");
-                    window.location.href = "{{ route('chat') }}";
+                    // Arahkan ke halaman sukses
+                    window.location.href = "{{ route('payment.success', $invoice->id) }}";
                 },
                 onPending: function(result){
-                    alert("Menunggu pembayaran!");
+                    // Bisa diarahkan ke gagal/pending
+                    window.location.href = "{{ route('payment.failed', $invoice->id) }}";
                 },
                 onError: function(result){
-                    alert("Pembayaran gagal!");
+                    // Arahkan ke halaman gagal
+                    window.location.href = "{{ route('payment.failed', $invoice->id) }}";
                 },
                 onClose: function(){
-                    // do nothing
+                    // User menutup popup tanpa bayar
+                    alert("Anda menutup jendela pembayaran.");
                 }
             });
         });

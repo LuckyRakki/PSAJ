@@ -115,9 +115,12 @@ class ChatController extends Controller
     {
         $invoice = \App\Models\Invoice::where('id', $id)->where('user_id', \Illuminate\Support\Facades\Auth::id())->firstOrFail();
 
-        // 1. Konfigurasi Midtrans (Ambil dari Config)
-        Config::$serverKey = config('services.midtrans.server_key');
-        Config::$isProduction = config('services.midtrans.is_production');
+        $dbServerKey = \DB::table('settings')->where('key', 'midtrans_server_key')->value('value');
+        $dbIsProduction = \DB::table('settings')->where('key', 'midtrans_environment')->value('value') == 'production';
+
+        // 1. Konfigurasi Midtrans Dinamis (Prioritas: Database > .env)
+        Config::$serverKey = !empty($dbServerKey) ? $dbServerKey : config('services.midtrans.server_key');
+        Config::$isProduction = !empty($dbServerKey) ? $dbIsProduction : config('services.midtrans.is_production');
         Config::$isSanitized = true;
         Config::$is3ds = true;
 
@@ -201,41 +204,65 @@ class ChatController extends Controller
         return redirect()->route('chat')->with('success', 'Bukti pembayaran berhasil dikirim!');
     }
 
-    public function midtransCallback(Request $request)
+    // 1. Fungsi Webhook / Callback Midtrans
+    public function midtransCallback(\Illuminate\Http\Request $request)
     {
-        // Kunci rahasia server kamu (Pastikan ada di file .env)
-        $serverKey = config('services.midtrans.server_key');
+        $dbServerKey = \DB::table('settings')->where('key', 'midtrans_server_key')->value('value');
         
-        // Midtrans mengirimkan data, kita buat kuncinya untuk dicocokkan
+        // Prioritas: Database > .env
+        $serverKey = !empty($dbServerKey) ? $dbServerKey : config('services.midtrans.server_key');
+        
+        // Buat signature key untuk dicocokkan dengan milik Midtrans
         $hashed = hash("sha512", $request->order_id . $request->status_code . $request->gross_amount . $serverKey);
         
-        // Jika kuncinya cocok (berarti valid dari Midtrans, bukan hacker)
+        // Buat signature key untuk dicocokkan dengan milik Midtrans
+        $hashed = hash("sha512", $request->order_id . $request->status_code . $request->gross_amount . $serverKey);
+        
         if ($hashed == $request->signature_key) {
             
-            // Cari tagihan berdasarkan order_id (biasanya menggunakan invoice_code)
-            $invoice = \App\Models\Invoice::where('invoice_code', $request->order_id)->first();
+            // --- FIX BUG DI SINI ---
+            // Pisahkan order_id dari Midtrans (contoh: INV-N4V3N3-1772674603)
+            // Kita pecah berdasarkan tanda strip (-) lalu gabungkan bagian 1 dan 2 saja
+            $parts = explode('-', $request->order_id);
+            $realInvoiceCode = $parts[0] . '-' . $parts[1]; // Hasilnya kembali jadi: INV-N4V3N3
+            
+            // Cari tagihan berdasarkan kode asli
+            $invoice = \App\Models\Invoice::where('invoice_code', $realInvoiceCode)->first();
+            // -----------------------
             
             if ($invoice) {
-                // Jika pembayaran Sukses (Settlement / Capture)
                 if ($request->transaction_status == 'capture' || $request->transaction_status == 'settlement') {
                     $invoice->update(['status' => 'paid']);
                     
-                    // (Opsional) Kirim notifikasi chat ke user otomatis dari sistem
-                    \App\Models\Message::create([
-                        'sender_id' => \App\Models\User::where('role', 'admin')->first()->id,
-                        'receiver_id' => $invoice->user_id,
-                        'message' => "Pembayaran untuk tagihan **{$invoice->invoice_code}** telah kami terima. Status pesanan Anda sekarang LUNAS dan akan segera kami proses.",
-                        'is_read' => false
-                    ]);
-                } 
-                // Jika pembayaran Kedaluwarsa / Batal (Expire / Cancel)
-                elseif ($request->transaction_status == 'expire' || $request->transaction_status == 'cancel') {
-                    $invoice->update(['status' => 'pending']); // Atau bisa ubah jadi 'failed' / 'expired'
+                    // Otomatis kirim pesan dari Admin ke User
+                    $admin = \App\Models\User::where('role', 'admin')->first();
+                    if($admin) {
+                        \App\Models\Message::create([
+                            'sender_id' => $admin->id,
+                            'receiver_id' => $invoice->user_id,
+                            'message' => "✅ Pembayaran tagihan **{$invoice->invoice_code}** sebesar Rp " . number_format($invoice->amount, 0, ',', '.') . " telah kami terima. Status pesanan Anda sekarang LUNAS dan akan segera kami proses/kirim sesuai jadwal.",
+                            'is_read' => false
+                        ]);
+                    }
+                } elseif ($request->transaction_status == 'expire' || $request->transaction_status == 'cancel' || $request->transaction_status == 'deny') {
+                    $invoice->update(['status' => 'pending']); // Kembalikan ke pending atau batalkan
                 }
             }
         }
-        
-        // Wajib balas 200 OK ke Midtrans agar mereka tidak mengirim notifikasi berulang-ulang
         return response()->json(['message' => 'Callback received']);
+    }
+
+    // 2. Fungsi Halaman Sukses
+    public function paymentSuccess($id)
+    {
+        $invoice = \App\Models\Invoice::findOrFail($id);
+        return view('chat.payment-success', compact('invoice'));
+    }
+
+    // 3. Fungsi Halaman Gagal/Pending
+    public function paymentFailed($id)
+    {
+        $invoice = \App\Models\Invoice::findOrFail($id);
+        return view('chat.payment-failed', compact('invoice'));
     }
 }

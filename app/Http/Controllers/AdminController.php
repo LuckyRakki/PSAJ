@@ -246,40 +246,39 @@ class AdminController extends Controller
     // Proses Update Settings
     public function settingsUpdate(Request $request)
     {
-        // Update Nama Web
-        Setting::where('key', 'site_name')->update(['value' => $request->site_name]);
+        // Daftar semua input teks yang ada di form settings.blade.php kita
+        $keys = [
+            'site_name', 'admin_wa', 'midtrans_environment', 
+            'midtrans_client_key', 'midtrans_server_key', 
+            'site_phone', 'site_email', 'site_address'
+        ];
 
-        // Update Logo (Jika ada upload)
+        // Looping untuk menyimpan setiap data ke tabel settings
+        foreach ($keys as $key) {
+            if ($request->has($key)) {
+                // Gunakan DB facade agar aman kalau kamu belum punya Model khusus Setting
+                \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
+                    ['key' => $key],
+                    ['value' => $request->$key]
+                );
+            }
+        }
+
+        // Khusus untuk upload Logo (jika ada file yang diupload)
         if ($request->hasFile('site_logo')) {
             $file = $request->file('site_logo');
             $filename = 'logo_' . time() . '.' . $file->getClientOriginalExtension();
+            
+            // Simpan ke folder public/uploads/settings
             $file->move(public_path('uploads/settings'), $filename);
-            Setting::updateOrCreate(['key' => 'site_logo'], ['value' => 'uploads/settings/' . $filename]);
+            
+            \Illuminate\Support\Facades\DB::table('settings')->updateOrInsert(
+                ['key' => 'site_logo'],
+                ['value' => 'uploads/settings/' . $filename]
+            );
         }
 
-        if ($request->hasFile('qris_image')) {
-            $file = $request->file('qris_image');
-            $filename = 'qris_' . time() . '.' . $file->getClientOriginalExtension();
-            $file->move(public_path('uploads/settings'), $filename);
-            \App\Models\Setting::updateOrCreate(['key' => 'qris_image'], ['value' => 'uploads/settings/' . $filename]);
-        }
-
-        // Update Rekening (Array ke JSON)
-        $banks = [];
-        if ($request->has('bank_name')) {
-            foreach ($request->bank_name as $index => $name) {
-                if (!empty($name)) {
-                    $banks[] = [
-                        'bank' => $name,
-                        'number' => $request->bank_number[$index],
-                        'name' => $request->bank_account_name[$index]
-                    ];
-                }
-            }
-        }
-        Setting::where('key', 'bank_accounts')->update(['value' => json_encode($banks)]);
-
-        return back()->with('success', 'Pengaturan berhasil disimpan!');
+        return redirect()->back()->with('success', 'Pengaturan berhasil disimpan!');
     }
 
     public function customers()
@@ -304,21 +303,120 @@ class AdminController extends Controller
 
     public function reports(Request $request)
     {
-        // Ambil data invoice yang LUNAS (paid) dan hubungkan dengan data User (penyewa)
-        // Kita juga tambahkan fitur filter berdasarkan bulan
-        $query = Invoice::where('status', 'paid');
+        $query = \App\Models\Invoice::where('status', 'paid');
 
-        if ($request->has('month') && $request->month != '') {
-            $query->whereMonth('created_at', $request->month);
-            // Opsional: whereYear('created_at', date('Y')) jika hanya tahun ini
+        // 1. Prioritas Utama: Filter berdasarkan Rentang Tanggal (Periode)
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('updated_at', [
+                $request->start_date . ' 00:00:00',
+                $request->end_date . ' 23:59:59'
+            ]);
+        } else {
+            // 2. Jika tidak pakai rentang tanggal, gunakan filter Bulan & Tahun
+            if ($request->filled('month')) {
+                $query->whereMonth('updated_at', $request->month);
+            }
+            if ($request->filled('year')) {
+                $query->whereYear('updated_at', $request->year);
+            }
         }
 
-        $invoices = $query->orderBy('created_at', 'desc')->get();
+        $invoices = $query->orderBy('updated_at', 'desc')->get();
         
-        // Hitung total pendapatan dari invoice yang sudah lunas
+        // Hitung total pendapatan dari hasil filter
         $totalPendapatan = $invoices->sum('amount');
 
-        return view('admin.reports', compact('invoices', 'totalPendapatan'));
+        // Ambil daftar tahun unik dari database (agar dropdown tahun otomatis update)
+        $availableYears = \App\Models\Invoice::selectRaw('YEAR(updated_at) as year')
+                            ->distinct()
+                            ->orderBy('year', 'desc')
+                            ->pluck('year');
+                            
+        // Jika database masih kosong, setidaknya tampilkan tahun ini
+        if($availableYears->isEmpty()){
+            $availableYears = collect([date('Y')]);
+        }
+
+        return view('admin.reports', compact('invoices', 'totalPendapatan', 'availableYears'));
+    }
+
+    public function categories()
+    {
+        // Ambil semua kategori beserta jumlah produk di dalamnya
+        $categories = \App\Models\Category::withCount('products')->orderBy('id', 'desc')->get();
+        return view('admin.categories.index', compact('categories'));
+    }
+
+    public function categoryCreate()
+    {
+        return view('admin.categories.form'); // Kita pakai 1 file form untuk Create & Edit
+    }
+
+    public function categoryStore(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:2048',
+        ]);
+
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $filename = time() . '_' . \Illuminate\Support\Str::slug($request->name) . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/categories'), $filename);
+            $imagePath = 'uploads/categories/' . $filename;
+        }
+
+        \App\Models\Category::create([
+            'name' => $request->name,
+            'image' => $imagePath,
+        ]);
+
+        return redirect()->route('admin.categories')->with('success', 'Kategori baru berhasil ditambahkan!');
+    }
+
+    public function categoryEdit($id)
+    {
+        $category = \App\Models\Category::findOrFail($id);
+        return view('admin.categories.form', compact('category'));
+    }
+
+    public function categoryUpdate(Request $request, $id)
+    {
+        $category = \App\Models\Category::findOrFail($id);
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,svg|max:2048',
+        ]);
+
+        $imagePath = $category->image; // Default pakai gambar lama
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $filename = time() . '_' . \Illuminate\Support\Str::slug($request->name) . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('uploads/categories'), $filename);
+            $imagePath = 'uploads/categories/' . $filename;
+        }
+
+        $category->update([
+            'name' => $request->name,
+            'image' => $imagePath,
+        ]);
+
+        return redirect()->route('admin.categories')->with('success', 'Kategori berhasil diperbarui!');
+    }
+
+    public function categoryDestroy($id)
+    {
+        $category = \App\Models\Category::findOrFail($id);
+        
+        // Cek apakah ada produk yang pakai kategori ini
+        if (\App\Models\Product::where('category_id', $id)->count() > 0) {
+            return redirect()->back()->with('error', 'Gagal dihapus! Kategori ini masih digunakan oleh beberapa produk.');
+        }
+
+        $category->delete();
+        return redirect()->route('admin.categories')->with('success', 'Kategori berhasil dihapus!');
     }
     
 }

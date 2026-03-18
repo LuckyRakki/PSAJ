@@ -17,24 +17,61 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h3 class="fw-bold mb-1 text-dark">Laporan Keuangan</h3>
-        <p class="text-muted mb-0">Histori transaksi sewa yang sudah berhasil (Lunas).</p>
+        <p class="text-muted mb-0">Rekapitulasi transaksi sewa yang sudah Lunas.</p>
     </div>
     
-    <div class="d-flex align-items-center gap-2">
-        <form action="{{ route('admin.reports') }}" method="GET" class="d-flex align-items-center bg-white p-1 rounded-3 shadow-sm border">
-            <select name="month" class="form-select form-select-sm border-0 bg-transparent fw-bold text-primary" onchange="this.form.submit()" style="cursor: pointer; outline: none; box-shadow: none;">
-                <option value="">-- Semua Bulan --</option>
-                @for($i = 1; $i <= 12; $i++)
-                    <option value="{{ $i }}" {{ request('month') == $i ? 'selected' : '' }}>
-                        Bulan {{ date('F', mktime(0, 0, 0, $i, 10)) }}
-                    </option>
-                @endfor
-            </select>
+    <button onclick="window.print()" class="btn btn-primary rounded-pill shadow-sm px-4 fw-bold no-print" style="background-color: #0f2f57; border-color: #0f2f57;">
+        <i class="fas fa-print me-2"></i> Cetak Dokumen
+    </button>
+</div>
+
+<div class="card border-0 shadow-sm rounded-4 mb-4 bg-white no-print">
+    <div class="card-body p-3">
+        <form action="{{ route('admin.reports') }}" method="GET" class="row g-2 align-items-end">
+            
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-muted mb-1">Bulan</label>
+                <select name="month" class="form-select form-select-sm border-light-subtle shadow-none">
+                    <option value="">Semua Bulan</option>
+                    @for($i = 1; $i <= 12; $i++)
+                        <option value="{{ $i }}" {{ request('month') == $i ? 'selected' : '' }}>
+                            {{ date('F', mktime(0, 0, 0, $i, 10)) }}
+                        </option>
+                    @endfor
+                </select>
+            </div>
+            
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-muted mb-1">Tahun</label>
+                <select name="year" class="form-select form-select-sm border-light-subtle shadow-none">
+                    <option value="">Semua Tahun</option>
+                    @foreach($availableYears as $year)
+                        <option value="{{ $year }}" {{ request('year') == $year ? 'selected' : '' }}>
+                            {{ $year }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            
+            <div class="col-md-1 text-center d-none d-md-block">
+                <span class="badge bg-light text-muted border px-2 py-1 mt-4">ATAU</span>
+            </div>
+
+            <div class="col-md-2">
+                <label class="form-label small fw-bold text-muted mb-1">Periode Awal</label>
+                <input type="date" name="start_date" class="form-control form-control-sm border-light-subtle shadow-none" value="{{ request('start_date') }}">
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label small fw-bold text-muted mb-1">Periode Akhir</label>
+                <input type="date" name="end_date" class="form-control form-control-sm border-light-subtle shadow-none" value="{{ request('end_date') }}">
+            </div>
+
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-sm btn-success fw-bold w-100 rounded-3 shadow-sm"><i class="fas fa-filter me-1"></i> Filter</button>
+                <a href="{{ route('admin.reports') }}" class="btn btn-sm btn-light border w-100 rounded-3 text-danger" title="Reset Filter"><i class="fas fa-times me-1"></i> Reset</a>
+            </div>
         </form>
-        
-        <button onclick="window.print()" class="btn btn-primary rounded-3 shadow-sm px-3 fw-bold no-print" style="background-color: #0f2f57; border-color: #0f2f57;">
-            <i class="fas fa-print me-1"></i> Cetak
-        </button>
     </div>
 </div>
 

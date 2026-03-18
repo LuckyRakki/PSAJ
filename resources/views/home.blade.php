@@ -3,19 +3,27 @@
 @section('content')
 
 <style>
-    /* Hero Section */
+    /* Hero Section Baru */
     .hero-section {
-        background: linear-gradient(rgba(15, 47, 87, 0.85), rgba(15, 47, 87, 0.85)), url('https://images.unsplash.com/photo-1565610222536-ef125c59da2c?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');
-        background-size: cover;
-        background-position: center;
-        padding: 100px 0;
+        /* Ini rahasianya: Gradient dari biru pekat di kiri (0-50%), lalu memudar transparan di kanan (100%), menimpa gambar genset */
+        background-image: 
+            linear-gradient(to right, rgba(15, 47, 87, 1) 0%, rgba(15, 47, 87, 0.9) 45%, rgba(15, 47, 87, 0.1) 100%), 
+            url('{{ asset("images/genset-dashboard.png") }}');
+        background-color: #0f2f57; /* Fallback warna biru gelap */
+        background-size: 65%; /* Mengatur seberapa besar gambar gensetnya (bisa diubah-ubah misal 70% atau cover) */
+        background-position: right center; /* Memaksa gambar genset nempel di kanan */
+        background-repeat: no-repeat;
+        padding: 130px 0 150px 0;
         color: white;
     }
-    .hero-img {
-        max-width: 100%;
-        border-radius: 5px;
-        /* Meniru gambar genset kuning di header */
-        content: url('https://png.pngtree.com/png-clipart/20230916/original/pngtree-industrial-diesel-generator-isolated-on-white-background-backup-power-photo-png-image_12249764.png'); 
+
+    /* Garis kuning kecil di bawah judul seperti di desain */
+    .title-accent {
+        width: 80px;
+        height: 5px;
+        background-color: #ffc107;
+        margin-bottom: 25px;
+        border-radius: 3px;
     }
 
     /* Yellow About Section */
@@ -31,30 +39,49 @@
         box-shadow: 0 10px 20px rgba(0,0,0,0.2);
     }
 
-    /* Category Cards */
+/* Category Cards - Desain Baru (Lebar & Elegan) */
     .cat-card {
-        border: 1px solid #eee;
-        transition: 0.3s;
+        border: 1px solid #e2e8f0;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
         height: 100%;
         background: white;
+        border-radius: 8px; /* Ujung agak membulat tapi tidak terlalu bulat */
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+    .cat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(15, 47, 87, 0.08);
+    }
+    .cat-img-wrapper {
+        padding: 40px 20px; /* Jarak putih yang lega di atas/bawah gambar */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-grow: 1; /* Mendorong tombol biru agar mentok ke bawah */
+        background-color: white;
     }
     .cat-card img {
-        height: 150px;
+        max-height: 110px; /* Membatasi tinggi gambar agar proporsional */
+        max-width: 100%;
         object-fit: contain;
-        padding: 20px;
     }
     .cat-btn {
         background-color: #0f2f57;
         color: white;
         width: 100%;
-        border-radius: 0 0 5px 5px;
-        padding: 10px;
-        font-size: 0.9rem;
+        padding: 15px; /* Tombol dibuat lebih tebal */
+        font-size: 1.05rem;
+        font-weight: 700;
+        text-align: center;
+        letter-spacing: 0.5px;
+        margin-top: auto;
     }
 
     /* Product Cards */
     .product-card {
-        background: #f8f9fa; /* Abu-abu muda seperti di gambar */
+        background: #f8f9fa;
         border: none;
         border-radius: 8px;
         overflow: hidden;
@@ -62,7 +89,7 @@
         box-shadow: 0 2px 5px rgba(0,0,0,0.05);
     }
     .product-img-wrapper {
-        background: #e9ecef; /* Background abu-abu untuk gambar produk */
+        background: #e9ecef;
         height: 200px;
         display: flex;
         align-items: center;
@@ -83,85 +110,88 @@
         padding: 8px 20px;
         border: none;
         border-radius: 4px;
+        text-decoration: none;
     }
-    .btn-detail:hover { background-color: #e0a800; }
+    .btn-detail:hover { background-color: #e0a800; color: #000; }
 </style>
 
-<!-- 1. Hero Section -->
 <section class="hero-section">
     <div class="container">
         <div class="row align-items-center">
-            <div class="col-lg-6">
-                <h1 class="display-5 fw-bold mb-3">Sewa Genset & AC Standing Profesional untuk Kebutuhan Anda</h1>
-                <p class="mb-4 text-light opacity-75">Solusi terpercaya untuk penyewaan genset dan AC standing dengan kualitas terbaik. Layanan 24 jam untuk acara, proyek, maupun kebutuhan darurat.</p>
-                <a href="#produk" class="btn btn-warning px-4 py-2 fw-bold">Lihat Produk</a>
+            <div class="col-lg-7">
+                <h1 class="display-4 fw-bold mb-3" style="line-height: 1.3;">Sewa Genset & AC Standing Profesional Untuk Kebutuhan Anda</h1>
+                <div class="title-accent"></div>
+                <p class="mb-4 text-light opacity-75 fs-6" style="max-width: 85%;">Solusi terpercaya untuk penyewaan genset dan AC standing dengan kualitas terbaik. Layanan 24 jam untuk acara, proyek, maupun kebutuhan darurat.</p>
+                
+                <div class="d-flex gap-3 mt-4">
+                    <a href="#produk" class="btn btn-warning px-4 py-2 fw-bold rounded-3 shadow">Lihat Produk</a>
+                </div>
             </div>
-            <div class="col-lg-6 d-none d-lg-block text-end">
-                <img class="hero-img" alt="Genset Kuning">
+            
+            <div class="col-lg-5 d-none d-lg-block">
             </div>
         </div>
     </div>
 </section>
 
-<!-- 2. About Section (Kuning) -->
 <section class="about-section">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-5 mb-4 mb-lg-0">
-                <!-- Gambar Genset Hijau/Biru di kiri -->
-                <img src="https://sc04.alicdn.com/kf/H8a846059530449419159040960534262W.jpg" class="about-img" alt="Genset Facility">
+                <img src="{{ asset('images/genset-dashboard.png') }}" class="about-img" alt="Genset Facility">
             </div>
             <div class="col-lg-7 ps-lg-5">
                 <h4 class="fw-bold mb-3">Wiratama Teknik</h4>
-                <p class="mb-3">Wiratama Teknik adalah usaha penyewaan genset dan AC standing yang berlokasi di Tangerang. Kami telah melayani berbagai kebutuhan acara seperti syuting film, konser musik, hajatan, pernikahan, dan acara besar lainnya.</p>
-                <p>Dengan pengalaman bertahun-tahun, kami memahami pentingnya keandalan peralatan untuk kesuksesan acara Anda. Kami menyediakan unit yang terawat baik dengan kapasitas yang beragam untuk memenuhi kebutuhan Anda.</p>
+                <p class="mb-3 text-dark">Wiratama Teknik adalah usaha penyewaan genset dan AC standing yang berlokasi di Tangerang. Kami telah melayani berbagai kebutuhan acara seperti syuting film, konser musik, hajatan, pernikahan, dan acara besar lainnya.</p>
+                <p class="text-dark">Dengan pengalaman bertahun-tahun, kami memahami pentingnya keandalan peralatan untuk kesuksesan acara Anda. Kami menyediakan unit yang terawat baik dengan kapasitas yang beragam untuk memenuhi kebutuhan Anda.</p>
             </div>
         </div>
     </div>
 </section>
 
-<!-- 3. Kategori Produk (Grid 5 Kolom) -->
-<!-- 3. Kategori Produk (Grid 5 Kolom) -->
-<section class="py-5">
+<section class="py-5" style="background-color: #f8fafc;">
     <div class="container">
         <div class="row justify-content-center g-4">
             @foreach($categories as $cat)
-            <div class="col-6 col-md-2"> 
-                <!-- TAMBAHKAN TAG A DI SINI -->
+            <div class="col-12 col-md-6 col-lg-3"> 
                 <a href="{{ route('products') }}" style="text-decoration: none; color: inherit;">
-                    <div class="cat-card d-flex flex-column align-items-center">
-                        <img src="{{ $cat['image'] }}" alt="{{ $cat['name'] }}">
-                        <div class="cat-btn text-center">{{ $cat['name'] }}</div>
+                    <div class="cat-card shadow-sm">
+                        
+                        <div class="cat-img-wrapper">
+                            @if(!empty($cat->image))
+                                <img src="{{ Str::startsWith($cat->image, 'http') ? $cat->image : asset($cat->image) }}" alt="{{ $cat->name }}">
+                            @else
+                                <img src="https://ui-avatars.com/api/?name={{ urlencode($cat->name) }}&background=e2e8f0&color=0f2f57&size=120&bold=true" alt="{{ $cat->name }}" style="border-radius: 8px;">
+                            @endif
+                        </div>
+                        
+                        <div class="cat-btn">{{ $cat->name }}</div>
                     </div>
                 </a>
-                <!-- END TAG A -->
             </div>
             @endforeach
         </div>
     </div>
 </section>
 
-<!-- 4. Produk Unggulan -->
 <section class="py-5 bg-white" id="produk">
     <div class="container">
         <div class="text-center mb-5">
-            <h2 class="fw-bold">Produk Unggulan Kami</h2>
+            <h2 class="fw-bold" style="color: #0f2f57;">Produk Unggulan Kami</h2>
             <p class="text-muted">Produk paling populer dan terlaris pilihan pelanggan kami.</p>
         </div>
 
-        <!-- INI KODE BARU YANG BENAR. HANYA ADA SATU GRID. -->
         <div class="row g-4 justify-content-center">
             @forelse($featuredProducts as $item)
             <div class="col-lg-3 col-md-4 col-sm-6 d-flex">
                 <div class="product-card w-100">
                     <div class="product-img-wrapper">
-                        <!-- Menggunakan object property -> bukan array key [] -->
-                        <img src="{{ $item->image }}" alt="{{ $item->name }}">
+                        <img src="{{ asset($item->image) }}" alt="{{ $item->name }}">
                     </div>
-                    <div class="product-body">
+                    <div class="product-body d-flex flex-column">
                         <div class="product-title">{{ $item->name }}</div>
-                        <div class="product-desc">{{ $item->description }}</div>
-                        <a href="{{ route('product.detail', $item->id) }}" class="btn-detail mt-auto">Lihat Detail</a>
+                        <div class="product-desc flex-grow-1">{{ Str::limit($item->description, 60) }}</div>
+                        <a href="{{ route('product.detail', $item->id) }}" class="btn-detail text-center mt-3">Lihat Detail</a>
                     </div>
                 </div>
             </div>

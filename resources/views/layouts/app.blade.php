@@ -27,10 +27,51 @@
         .nav-link:hover { color: white !important; }
         .nav-link.active { color: white !important; font-weight: 600; }
 
-        footer { background-color: var(--footer-bg); color: white; padding: 50px 0 20px; }
-        footer h5 { color: var(--primary-yellow); font-weight: 600; margin-bottom: 20px; }
-        footer ul li { margin-bottom: 10px; font-size: 0.9rem; }
-        footer a { color: #ccc; text-decoration: none; }
+        .footer-dark {
+        background-color: #0f2f57; /* Warna biru gelap khas Wiratama */
+        color: #e2e8f0;
+        padding: 60px 0 20px;
+    }
+    .footer-dark a {
+        color: #cbd5e1;
+        text-decoration: none;
+        transition: color 0.3s ease;
+    }
+    .footer-dark a:hover {
+        color: #ffc107; /* Warna kuning saat di-hover */
+    }
+    .footer-title {
+        color: #ffffff;
+        font-weight: 700;
+        margin-bottom: 20px;
+        position: relative;
+        padding-bottom: 10px;
+    }
+    .footer-title::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        width: 40px;
+        height: 3px;
+        background-color: #ffc107;
+        border-radius: 2px;
+    }
+    .social-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        background-color: rgba(255,255,255,0.1);
+        border-radius: 50%;
+        margin-right: 10px;
+        transition: background-color 0.3s;
+    }
+    .social-icon:hover {
+        background-color: #ffc107;
+        color: #0f2f57 !important;
+    }
     </style>
 </head>
 <body>
@@ -98,38 +139,62 @@
     @yield('content')
 
     <!-- Footer -->
-    <footer>
-        <div class="container">
-            <div class="row">
-                <div class="col-md-4 mb-4">
-                    <a class="navbar-brand mb-3 d-block" href="{{ route('home') }}">
-                        <i class="fas fa-bolt me-2"></i>Wiratama <span>Teknik</span>
-                    </a>
-                    <p class="small text-secondary">Penyedia jasa sewa genset & tenda. DKI Jakarta, Jawa Barat dan Jawa Tengah.</p>
-                </div>
-                <div class="col-md-4 mb-4">
-                    <h5>Produk & Layanan</h5>
-                    <ul class="list-unstyled">
-                        <li><a href="{{ route('products') }}">Sewa Genset</a></li>
-                        <li><a href="{{ route('products') }}">Sewa AC Standing</a></li>
-                        <li><a href="{{ route('products') }}">Sewa Misty Fan</a></li>
-                        <li><a href="{{ route('products') }}">Sewa Tenda Sarnafil</a></li>
-                    </ul>
-                </div>
-                <div class="col-md-4 mb-4">
-                    <h5>Hubungi Kami</h5>
-                    <ul class="list-unstyled">
-                        <li><i class="fas fa-phone me-2"></i> +62 812-9568-1842</li>
-                        <li><i class="fas fa-envelope me-2"></i> wiratamateknik@gmail.com</li>
-                    </ul>
+    <footer class="footer-dark mt-auto">
+    <div class="container">
+        @php
+            // Membaca langsung dari DB agar dinamis (sesuaikan nama tabel/key jika berbeda)
+            $siteName = \DB::table('settings')->where('key', 'site_name')->value('value') ?? 'Wiratama Teknik';
+            $sitePhone = \DB::table('settings')->where('key', 'site_phone')->value('value') ?? '0812 3456 7890';
+            $siteEmail = \DB::table('settings')->where('key', 'site_email')->value('value') ?? 'info@wiratamateknik.com';
+            $siteAddress = \DB::table('settings')->where('key', 'site_address')->value('value') ?? 'Jakarta';
+        @endphp
+
+        <div class="row g-4 mb-4">
+            <div class="col-lg-4 col-md-6">
+                <h5 class="footer-title">{{ $siteName }}</h5>
+                <p class="small text-light opacity-75 mb-4" style="line-height: 1.8;">
+                    Solusi terbaik dan terpercaya untuk kebutuhan penyewaan peralatan teknik dan alat berat. Kami siap mendukung kelancaran proyek dan acara Anda.
+                </p>
+                <div>
+                    <a href="#" class="social-icon text-white"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social-icon text-white"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="social-icon text-white"><i class="fab fa-whatsapp"></i></a>
                 </div>
             </div>
-            <hr style="border-color: rgba(255,255,255,0.1);">
-            <div class="text-center small text-secondary">
-                &copy; {{ date('Y') }} Wiratama Teknik. All rights reserved.
+
+            <div class="col-lg-4 col-md-6">
+                <h5 class="footer-title">Tautan Cepat</h5>
+                <ul class="list-unstyled small" style="line-height: 2.2;">
+                    <li><i class="fas fa-angle-right me-2 opacity-50"></i><a href="{{ route('home') }}">Beranda Utama</a></li>
+                    <li><i class="fas fa-angle-right me-2 opacity-50"></i><a href="{{ route('products') }}">Katalog Produk</a></li>
+                    @auth
+                        <li><i class="fas fa-angle-right me-2 opacity-50"></i><a href="{{ route('chat') }}">Chat dengan Admin</a></li>
+                    @else
+                        <li><i class="fas fa-angle-right me-2 opacity-50"></i><a href="{{ route('login') }}">Masuk / Daftar</a></li>
+                    @endauth
+                </ul>
+            </div>
+
+            <div class="col-lg-4 col-md-12">
+                <h5 class="footer-title">Hubungi Kami</h5>
+                <ul class="list-unstyled small text-light opacity-75" style="line-height: 2;">
+                    <li class="d-flex align-items-start mb-2">
+                        <i class="fas fa-map-marker-alt mt-1 me-3 text-warning"></i>
+                        <span>{{ $siteAddress }}</span>
+                    </li>
+                    <li class="d-flex align-items-center mb-2">
+                        <i class="fas fa-phone-alt me-3 text-warning"></i>
+                        <span>{{ $sitePhone }}</span>
+                    </li>
+                    <li class="d-flex align-items-center">
+                        <i class="fas fa-envelope me-3 text-warning"></i>
+                        <span>{{ $siteEmail }}</span>
+                    </li>
+                </ul>
             </div>
         </div>
-    </footer>
+    </div>
+</footer>
 
     @auth
         @if(Auth::user()->role == 'user')
