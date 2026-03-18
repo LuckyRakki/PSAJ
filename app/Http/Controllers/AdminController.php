@@ -12,6 +12,7 @@ use App\Models\Setting;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 class AdminController extends Controller
@@ -110,8 +111,11 @@ class AdminController extends Controller
 
         // Cek jika ada upload gambar baru
         if ($request->hasFile('image')) {
-            // Hapus gambar lama jika perlu (opsional)
-            // if(file_exists(public_path($product->image))) unlink(public_path($product->image));
+            // --- FITUR CLEANUP PRODUK ---
+            if ($product->image && \Illuminate\Support\Facades\File::exists(public_path($product->image))) {
+                \Illuminate\Support\Facades\File::delete(public_path($product->image));
+            }
+            // -----------------------------
 
             $file = $request->file('image');
             $filename = time() . '_' . $file->getClientOriginalName();
@@ -139,10 +143,13 @@ class AdminController extends Controller
     public function productDestroy($id)
     {
         $product = Product::findOrFail($id);
-        // Hapus file gambar jika ada
-        if (file_exists(public_path($product->image))) {
-            unlink(public_path($product->image));
+        
+        // --- FITUR CLEANUP PRODUK ---
+        if ($product->image && \Illuminate\Support\Facades\File::exists(public_path($product->image))) {
+            \Illuminate\Support\Facades\File::delete(public_path($product->image));
         }
+        // -----------------------------
+        
         $product->delete();
         return redirect()->back()->with('success', 'Produk berhasil dihapus');
     }
@@ -391,7 +398,17 @@ class AdminController extends Controller
         ]);
 
         $imagePath = $category->image; // Default pakai gambar lama
+
+        // Jika user meng-upload gambar baru
         if ($request->hasFile('image')) {
+            
+            // --- FITUR CLEANUP: Hapus file gambar lama jika ada ---
+            // Pastikan gambar lama bukan null, dan file fisiknya benar-benar ada di folder
+            if ($category->image && \Illuminate\Support\Facades\File::exists(public_path($category->image))) {
+                \Illuminate\Support\Facades\File::delete(public_path($category->image));
+            }
+            // ------------------------------------------------------
+
             $file = $request->file('image');
             $filename = time() . '_' . \Illuminate\Support\Str::slug($request->name) . '.' . $file->getClientOriginalExtension();
             $file->move(public_path('uploads/categories'), $filename);
@@ -415,8 +432,14 @@ class AdminController extends Controller
             return redirect()->back()->with('error', 'Gagal dihapus! Kategori ini masih digunakan oleh beberapa produk.');
         }
 
+        // --- FITUR CLEANUP: Hapus file gambar sebelum datanya dihapus dari DB ---
+        if ($category->image && \Illuminate\Support\Facades\File::exists(public_path($category->image))) {
+            \Illuminate\Support\Facades\File::delete(public_path($category->image));
+        }
+        // ------------------------------------------------------------------------
+
         $category->delete();
-        return redirect()->route('admin.categories')->with('success', 'Kategori berhasil dihapus!');
+        return redirect()->route('admin.categories')->with('success', 'Kategori dan gambarnya berhasil dihapus!');
     }
     
 }
